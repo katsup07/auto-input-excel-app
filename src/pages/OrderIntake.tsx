@@ -89,9 +89,17 @@ const initialDataList = [
 
 
 
+
+// Unicode for circled numbers: ① (U+2460), ② (U+2461), ...
+const circledNumbers = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+const defaultSheetName = idx => `シート ${(circledNumbers[idx] || idx + 1)}`;
+
 const OrderIntake = () => {
   const [activePage, setActivePage] = useState(0);
   const [pagesData, setPagesData] = useState(initialDataList);
+  const [sheetNames, setSheetNames] = useState(initialDataList.map((_, idx) => defaultSheetName(idx)));
+  const [editingSheetIdx, setEditingSheetIdx] = useState(-1);
+  const [editingSheetValue, setEditingSheetValue] = useState('');
 
   const handleAddRow = () => {
     setPagesData(prev => prev.map((data, idx) =>
@@ -111,9 +119,27 @@ const OrderIntake = () => {
   // Unicode for circled numbers: ① (U+2460), ② (U+2461), ...
   const circledNumbers = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 
+
   const handleAddSheet = () => {
     setPagesData(prev => [...prev, [columns.map(() => ({ value: '' }))]]);
+    setSheetNames(prev => [...prev, defaultSheetName(prev.length)]);
     setActivePage(pagesData.length); // focus new sheet
+  };
+
+  const handleRenameSheet = idx => {
+    setEditingSheetIdx(idx);
+    setEditingSheetValue(sheetNames[idx]);
+  };
+
+  const handleRenameSheetSubmit = (idx) => {
+    if (editingSheetValue.trim() === '') {
+      setEditingSheetIdx(-1);
+      setEditingSheetValue('');
+      return;
+    }
+    setSheetNames(prev => prev.map((name, i) => i === idx ? editingSheetValue.trim() : name));
+    setEditingSheetIdx(-1);
+    setEditingSheetValue('');
   };
 
   return (
@@ -122,14 +148,83 @@ const OrderIntake = () => {
         <h1 style={{ margin: 0, color: "black", fontSize: '1.3rem' }}>注文一覧</h1>
         <div className="tabs" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
           {pagesData.map((_, idx) => (
-            <div key={idx} style={{ position: 'relative', display: 'inline-block', marginRight: 8 }}>
-              <button
-                className={"tab" + (activePage === idx ? " active" : "")}
-                style={{ fontSize: '1.1rem', paddingRight: pagesData.length > 1 ? 28 : undefined }}
-                onClick={() => setActivePage(idx)}
-              >
-                シート {circledNumbers[idx] || idx + 1}
-              </button>
+            <div key={idx} style={{ position: 'relative', display: 'inline-block', marginRight: 14 }}>
+              {editingSheetIdx === idx ? (
+                <form
+                  onSubmit={e => {
+                    e.preventDefault();
+                    handleRenameSheetSubmit(idx);
+                  }}
+                  style={{ display: 'inline-block' }}
+                >
+                  <input
+                    type="text"
+                    value={editingSheetValue}
+                    autoFocus
+                    onChange={e => setEditingSheetValue(e.target.value)}
+                    onBlur={() => handleRenameSheetSubmit(idx)}
+                    onKeyDown={e => {
+                      if (e.key === 'Escape') {
+                        setEditingSheetIdx(-1);
+                        setEditingSheetValue('');
+                      }
+                    }}
+                    style={{
+                      fontSize: '1.1rem',
+                      padding: '0.3rem 0.7rem',
+                      border: '1px solid #ccc',
+                      borderRadius: 4,
+                      minWidth: 60,
+                      maxWidth: 120,
+                    }}
+                    title="Enterで確定、Escでキャンセル"
+                  />
+                </form>
+              ) : (
+                <button
+                  className={"tab" + (activePage === idx ? " active" : "")}
+                  style={{ fontSize: '1.1rem', paddingRight: pagesData.length > 1 ? 36 : undefined, display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}
+                  onClick={() => setActivePage(idx)}
+                  onDoubleClick={() => handleRenameSheet(idx)}
+                  title="ダブルクリックで名前を変更"
+                >
+                  {/* Edit icon in top left corner, circular, above tab */}
+                  <span
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleRenameSheet(idx);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      left: -10,
+                      top: -14,
+                      width: 20,
+                      height: 20,
+                      border: 'none',
+                      background: '#fff',
+                      color: '#3182ce',
+                      fontWeight: 'bold',
+                      fontSize: '1rem',
+                      cursor: 'pointer',
+                      padding: 0,
+                      lineHeight: 1,
+                      zIndex: 2,
+                      borderRadius: '50%',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title="名前を変更"
+                    tabIndex={-1}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: 'middle' }}>
+                      <path d="M14.85 2.85a1.2 1.2 0 0 1 1.7 1.7l-1.1 1.1-1.7-1.7 1.1-1.1zm-2.12 2.12l1.7 1.7-8.13 8.13c-.13.13-.23.3-.27.48l-.38 1.7c-.07.3.2.57.5.5l1.7-.38c.18-.04.35-.14.48-.27l8.13-8.13-1.7-1.7-8.13 8.13c-.13.13-.23.3-.27.48l-.38 1.7c-.07.3.2.57.5.5l1.7-.38c.18-.04.35-.14.48-.27l8.13-8.13z" fill="#3182ce"/>
+                    </svg>
+                  </span>
+                  {sheetNames[idx]}
+                </button>
+              )}
               {pagesData.length > 1 && (
                 <button
                   onClick={e => {
@@ -142,6 +237,12 @@ const OrderIntake = () => {
                         else if (activePage === idx) setActivePage(a => Math.max(0, a - 1));
                         return newData;
                       });
+                      setSheetNames(prev => prev.filter((_, i) => i !== idx));
+                      // If renaming, cancel rename if the sheet is deleted
+                      if (editingSheetIdx === idx) {
+                        setEditingSheetIdx(-1);
+                        setEditingSheetValue('');
+                      }
                     }
                   }}
                   style={{
@@ -167,6 +268,7 @@ const OrderIntake = () => {
                   }}
                   aria-label={`Remove sheet ${idx + 1}`}
                   tabIndex={-1}
+                  title="シートを削除"
                 >×</button>
               )}
             </div>
@@ -176,11 +278,12 @@ const OrderIntake = () => {
             style={{ fontSize: '1.1rem', padding: '0.5rem 1rem', border: '1px solid #ccc', background: '#f1f1f1', cursor: 'pointer' }}
             onClick={handleAddSheet}
             aria-label="Add new sheet"
+            title="新しいシートを追加"
           >
             ＋
           </button>
         </div>
-        <div style={{ borderTop: '1px solid #e5e7eb', marginTop: 8, paddingTop: 8, display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ borderTop: '1px solid #e5e7eb', marginTop: 8, paddingTop: 8, display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'flex-end' }}>
           <button className="primary" onClick={handleAddRow}>
             新しい行を追加
           </button>
