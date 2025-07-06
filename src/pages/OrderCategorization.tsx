@@ -1,5 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { FaDownload } from 'react-icons/fa';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // 仮データ: 注文一覧（OrderIntakeの初期データを利用）
 const rawOrders = [
@@ -39,22 +42,59 @@ const funeralTabs = Array.from(funeralMap.keys());
 
 export default function OrderCategorization() {
   const [active, setActive] = useState(0);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  // PDFエクスポート
+  const handleExportPDF = async () => {
+    if (!tableRef.current) return;
+    const input = tableRef.current;
+    const canvas = await html2canvas(input, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const imgWidth = pageWidth - 40;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
+    pdf.save(`${funeralTabs[active] || '注文の分類・集計'}.pdf`);
+  };
+
   return (
     <>
-      <h1 style={{ margin: '1rem 0 0 0', color: 'black', fontSize: '1.3rem' }}>注文の分類・集計</h1>
-      <div className="tabs" style={{ marginBottom: 16, marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
-        {funeralTabs.map((key, idx) => (
-          <button
-            key={key}
-            className={"tab" + (active === idx ? " active" : "")}
-            onClick={() => setActive(idx)}
-            style={{ minWidth: 120 }}
-          >
-            {key}
-          </button>
-        ))}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+        <h1 style={{ margin: '1rem 0 0 0', color: 'black', fontSize: '1.3rem' }}>注文の分類・集計</h1>
+        <button
+          className="secondary"
+          onClick={handleExportPDF}
+          style={{
+            marginLeft: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: '0.95em', // Match OrderIntake button size
+            padding: '0.35em 0.8em', // Match OrderIntake button size
+            height: 32, // Match OrderIntake button height
+            borderRadius: 6
+          }}
+          title="PDF出力"
+        >
+          <FaDownload style={{ fontSize: '1.1em' }} /> PDF出力
+        </button>
       </div>
-      <div className="tab-content">
+      <div className="tabs" style={{ marginBottom: 16, marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
+          {funeralTabs.map((key, idx) => (
+            <button
+              key={key}
+              className={"tab" + (active === idx ? " active" : "")}
+              onClick={() => setActive(idx)}
+              style={{ minWidth: 120 }}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="tab-content" ref={tableRef}>
         <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff' }}>
           <thead>
             <tr style={{ background: '#f7fafc' }}>

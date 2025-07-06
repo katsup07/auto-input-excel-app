@@ -1,8 +1,26 @@
+/* Fade transition for page content */
+.fade-page {
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fade-page.fade-in {
+  opacity: 1;
+}
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+/* Fade transition for page changes */
+.fade-page {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.fade-page.fade-in {
+  opacity: 1;
 }
 
 .logo {

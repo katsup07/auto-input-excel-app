@@ -1,5 +1,6 @@
 
 import { useState, useRef } from 'react';
+import { FaPlus, FaMinus, FaDownload } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import Spreadsheet from 'react-spreadsheet';
@@ -160,116 +161,83 @@ const OrderIntake = () => {
 
   return (
     <>
-      <div style={{ position: 'sticky', top: 0, background: '#fff', zIndex: 10, padding: '1rem 0 1rem 0', borderBottom: '1px solid #eee' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ margin: 0, color: "black", fontSize: '1.3rem' }}>注文一覧</h1>
-        <div className="tabs" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
-          {pagesData.map((_, idx) => (
-            <div key={idx} style={{ position: 'relative', display: 'inline-block', marginRight: 14 }}>
-              {editingSheetIdx === idx ? (
-                <form
-                  onSubmit={e => {
-                    e.preventDefault();
-                    handleRenameSheetSubmit(idx);
-                  }}
-                  style={{ display: 'inline-block' }}
-                >
-                  <input
-                    type="text"
-                    value={editingSheetValue}
-                    autoFocus
-                    onChange={e => setEditingSheetValue(e.target.value)}
-                    onBlur={() => handleRenameSheetSubmit(idx)}
-                    onKeyDown={e => {
-                      if (e.key === 'Escape') {
-                        setEditingSheetIdx(-1);
-                        setEditingSheetValue('');
-                      }
-                    }}
-                    style={{
-                      fontSize: '1.1rem',
-                      padding: '0.3rem 0.7rem',
-                      border: '1px solid #ccc',
-                      borderRadius: 4,
-                      minWidth: 60,
-                      maxWidth: 120,
-                    }}
-                    title="Enterで確定、Escでキャンセル"
-                  />
-                </form>
-              ) : (
-                <button
-                  className={"tab" + (activePage === idx ? " active" : "")}
-                  style={{ fontSize: '1.1rem', paddingRight: pagesData.length > 1 ? 36 : undefined, display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}
-                  onClick={() => setActivePage(idx)}
-                  onDoubleClick={() => handleRenameSheet(idx)}
-                  title="ダブルクリックで名前を変更"
-                >
-                  {/* Edit icon in top left corner, circular, above tab */}
-                  <span
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleRenameSheet(idx);
-                    }}
-                    style={{
-                      position: 'absolute',
-                      left: -10,
-                      top: -14,
-                      width: 20,
-                      height: 20,
-                      border: 'none',
-                      background: '#fff',
-                      color: '#3182ce',
-                      fontWeight: 'bold',
-                      fontSize: '1rem',
-                      cursor: 'pointer',
-                      padding: 0,
-                      lineHeight: 1,
-                      zIndex: 2,
-                      borderRadius: '50%',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    title="名前を変更"
-                    tabIndex={-1}
-                  >
-                    <svg width="13" height="13" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: 'middle' }}>
-                      <path d="M14.85 2.85a1.2 1.2 0 0 1 1.7 1.7l-1.1 1.1-1.7-1.7 1.1-1.1zm-2.12 2.12l1.7 1.7-8.13 8.13c-.13.13-.23.3-.27.48l-.38 1.7c-.07.3.2.57.5.5l1.7-.38c.18-.04.35-.14.48-.27l8.13-8.13-1.7-1.7-8.13 8.13c-.13.13-.23.3-.27.48l-.38 1.7c-.07.3.2.57.5.5l1.7-.38c.18-.04.35-.14.48-.27l8.13-8.13z" fill="#3182ce"/>
-                    </svg>
-                  </span>
-                  {sheetNames[idx]}
-                </button>
-              )}
-              {pagesData.length > 1 && (
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    if (window.confirm('このシートを削除してもよろしいですか？')) {
-                      setPagesData(prev => {
-                        const newData = prev.filter((_, i) => i !== idx);
-                        // If the removed tab was before or at the current, adjust activePage
-                        if (activePage > idx) setActivePage(a => a - 1);
-                        else if (activePage === idx) setActivePage(a => Math.max(0, a - 1));
-                        return newData;
-                      });
-                      setSheetNames(prev => prev.filter((_, i) => i !== idx));
-                      // If renaming, cancel rename if the sheet is deleted
-                      if (editingSheetIdx === idx) {
-                        setEditingSheetIdx(-1);
-                        setEditingSheetValue('');
-                      }
+        <button
+          className="secondary"
+          onClick={handleExportPDF}
+          style={{
+            marginLeft: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: '0.95em',
+            padding: '0.35em 0.8em',
+            height: 32,
+            borderRadius: 6
+          }}
+          title="PDF出力"
+        >
+          <FaDownload style={{ fontSize: '1em' }} /> PDF出力
+        </button>
+      </div>
+      <div className="tabs" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
+        {pagesData.map((_, idx) => (
+          <div key={idx} style={{ position: 'relative', display: 'inline-block', marginRight: 14 }}>
+            {editingSheetIdx === idx ? (
+              <form
+                onSubmit={e => {
+                  e.preventDefault();
+                  handleRenameSheetSubmit(idx);
+                }}
+                style={{ display: 'inline-block' }}
+              >
+                <input
+                  type="text"
+                  value={editingSheetValue}
+                  autoFocus
+                  onChange={e => setEditingSheetValue(e.target.value)}
+                  onBlur={() => handleRenameSheetSubmit(idx)}
+                  onKeyDown={e => {
+                    if (e.key === 'Escape') {
+                      setEditingSheetIdx(-1);
+                      setEditingSheetValue('');
                     }
                   }}
                   style={{
+                    fontSize: '1.1rem',
+                    padding: '0.3rem 0.7rem',
+                    border: '1px solid #ccc',
+                    borderRadius: 4,
+                    minWidth: 60,
+                    maxWidth: 120,
+                  }}
+                  title="Enterで確定、Escでキャンセル"
+                />
+              </form>
+            ) : (
+              <button
+                className={"tab" + (activePage === idx ? " active" : "")}
+                style={{ fontSize: '1.1rem', paddingRight: pagesData.length > 1 ? 36 : undefined, display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}
+                onClick={() => setActivePage(idx)}
+                onDoubleClick={() => handleRenameSheet(idx)}
+                title="ダブルクリックで名前を変更"
+              >
+                {/* Edit icon in top left corner, circular, above tab */}
+                <span
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleRenameSheet(idx);
+                  }}
+                  style={{
                     position: 'absolute',
-                    right: -10,
+                    left: -10,
                     top: -14,
                     width: 20,
                     height: 20,
                     border: 'none',
                     background: '#fff',
-                    color: '#e53e3e',
+                    color: '#3182ce',
                     fontWeight: 'bold',
                     fontSize: '1rem',
                     cursor: 'pointer',
@@ -282,36 +250,85 @@ const OrderIntake = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
-                  aria-label={`Remove sheet ${idx + 1}`}
+                  title="名前を変更"
                   tabIndex={-1}
-                  title="シートを削除"
-                >×</button>
-              )}
-            </div>
-          ))}
-          <button
-            className="tab"
-            style={{ fontSize: '1.1rem', padding: '0.5rem 1rem', border: '1px solid #ccc', background: '#f1f1f1', cursor: 'pointer' }}
-            onClick={handleAddSheet}
-            aria-label="Add new sheet"
-            title="新しいシートを追加"
-          >
-            ＋
+                >
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: 'middle' }}>
+                    <path d="M14.85 2.85a1.2 1.2 0 0 1 1.7 1.7l-1.1 1.1-1.7-1.7 1.1-1.1zm-2.12 2.12l1.7 1.7-8.13 8.13c-.13.13-.23.3-.27.48l-.38 1.7c-.07.3.2.57.5.5l1.7-.38c.18-.04.35-.14.48-.27l8.13-8.13-1.7-1.7-8.13 8.13c-.13.13-.23.3-.27.48l-.38 1.7c-.07.3.2.57.5.5l1.7-.38c.18-.04.35-.14.48-.27l8.13-8.13z" fill="#3182ce"/>
+                  </svg>
+                </span>
+                {sheetNames[idx]}
+              </button>
+            )}
+            {pagesData.length > 1 && (
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  if (window.confirm('このシートを削除してもよろしいですか？')) {
+                    setPagesData(prev => {
+                      const newData = prev.filter((_, i) => i !== idx);
+                      // If the removed tab was before or at the current, adjust activePage
+                      if (activePage > idx) setActivePage(a => a - 1);
+                      else if (activePage === idx) setActivePage(a => Math.max(0, a - 1));
+                      return newData;
+                    });
+                    setSheetNames(prev => prev.filter((_, i) => i !== idx));
+                    // If renaming, cancel rename if the sheet is deleted
+                    if (editingSheetIdx === idx) {
+                      setEditingSheetIdx(-1);
+                      setEditingSheetValue('');
+                    }
+                  }
+                }}
+                style={{
+                  position: 'absolute',
+                  right: -10,
+                  top: -14,
+                  width: 20,
+                  height: 20,
+                  border: 'none',
+                  background: '#fff',
+                  color: '#e53e3e',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  padding: 0,
+                  lineHeight: 1,
+                  zIndex: 2,
+                  borderRadius: '50%',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                aria-label={`Remove sheet ${idx + 1}`}
+                tabIndex={-1}
+                title="シートを削除"
+              >×</button>
+            )}
+          </div>
+        ))}
+        <button
+          className="tab"
+          style={{ fontSize: '1.1rem', padding: '0.5rem 1rem', border: '1px solid #ccc', background: '#f1f1f1', cursor: 'pointer' }}
+          onClick={handleAddSheet}
+          aria-label="Add new sheet"
+          title="新しいシートを追加"
+        >
+          ＋
+        </button>
+      </div>
+      <div style={{ borderTop: '1px solid #e5e7eb', marginTop: 8, paddingTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '0.3rem' }}>
+          <button className="primary" onClick={handleAddRow} title="新しい行を追加" style={{ fontSize: '0.95em', padding: '0.35em 0.8em', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <FaPlus style={{ fontSize: '1em' }} /> 行追加
           </button>
-        </div>
-        <div style={{ borderTop: '1px solid #e5e7eb', marginTop: 8, paddingTop: 8, display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <button className="primary" onClick={handleAddRow}>
-            新しい行を追加
-          </button>
-          <button className="primary" onClick={handleRemoveRow} disabled={pagesData[activePage].length === 0}>
-            最後の行を削除
-          </button>
-          <button className="secondary" onClick={handleExportPDF} style={{ marginLeft: 8 }}>
-            PDF出力
+          <button className="primary" onClick={handleRemoveRow} disabled={pagesData[activePage].length === 0} title="最後の行を削除" style={{ fontSize: '0.95em', padding: '0.35em 0.8em', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <FaMinus style={{ fontSize: '1em' }} /> 行削除
           </button>
         </div>
       </div>
-      <div style={{ overflowX: 'auto', maxWidth: '100%' }} ref={tableRef}>
+      <div style={{ overflowX: 'auto', maxWidth: '100%', marginTop: 16 }} ref={tableRef}>
         <style>{`
           .Spreadsheet__table th {
             background: #f7fafc !important;
