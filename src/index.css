@@ -1,3 +1,8 @@
+/* Force react-spreadsheet cells to wrap text */
+.rsp__cell, .Spreadsheet__cell {
+  white-space: pre-wrap !important;
+  word-break: break-all;
+}
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -15,7 +20,159 @@
 /* Typography */
 h1 {
   font-size: 1.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
+  font-weight: 600;
+  color: #222;
+  letter-spacing: 0.01em;
+}
+
+body {
+  background: #f6f8fa;
+  color: #222;
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', Arial, sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+  background: #23272f;
+  color: #f3f6fa;
+  min-height: 100vh;
+  border-right: 1px solid #e5e7eb;
+  padding-top: 2rem;
+}
+.sidebar h2 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  color: #bfc7d5;
+}
+.sidebar a {
+  display: block;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  color: #f3f6fa;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+.sidebar a.active, .sidebar a:hover {
+  background: #3b4252;
+  color: #fff;
+}
+
+/* Main content */
+.main {
+  background: #fff;
+  border-radius: 12px;
+  margin: 2rem 2rem 2rem 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 2rem 2.5rem;
+  min-height: 80vh;
+}
+
+/* Table styles */
+table {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  border: 1px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+}
+th, td {
+  border: 1px solid #e5e7eb;
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  font-size: 1rem;
+}
+th {
+  background: #f3f6fa;
+  font-weight: 600;
+}
+
+/* Buttons */
+button.primary {
+  background: #2b6cb0;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button.primary:hover:not(:disabled) {
+  background: #245a8d;
+}
+button.primary:disabled {
+  background: #bfc7d5;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+/* Form styles */
+.form {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  padding: 2rem 2rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.form label {
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+.form input,
+.form textarea {
+  padding: 0.6rem;
+  font-size: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  margin-top: 0.2rem;
+}
+.form textarea {
+  min-height: 60px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+.tab {
+  padding: 0.5rem 1.2rem;
+  border: 1px solid #e5e7eb;
+  background: #f3f6fa;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #2b2d42;
+  transition: background 0.2s;
+}
+.tab.active, .tab:hover {
+  background: #fff;
+  color: #2b6cb0;
+  border-bottom: 2px solid #2b6cb0;
+}
+.tab-content {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0 0 8px 8px;
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Spreadsheet cell wrapping (for react-spreadsheet) */
+.rsp__cell, .Spreadsheet__cell {
+  white-space: pre-wrap !important;
+  word-break: break-all;
 }
 
 /* Tables */

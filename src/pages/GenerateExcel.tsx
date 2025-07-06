@@ -1,21 +1,21 @@
 export default function GenerateExcel() {
   return (
     <>
-      <h1>Generate New Excel File</h1>
+      <h1>新規Excelファイル作成</h1>
       <form className="form">
         <label>
-          Customer Name:
-          <input type="text" placeholder="Name" />
+          ご依頼者のお名前
+          <input type="text" placeholder="お名前" />
         </label>
         <label>
-          Funeral Date:
+          ご葬儀の日程
           <input type="date" />
         </label>
         <label>
-          Items:
-          <textarea placeholder="List items here" />
+          項目
+          <textarea placeholder="項目を入力してください" />
         </label>
-        <button type="submit">Create File</button>
+        <button className="primary" type="submit">ファイル作成</button>
       </form>
     </>
   );
