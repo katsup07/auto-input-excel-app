@@ -4,7 +4,7 @@ import Spreadsheet from 'react-spreadsheet';
 import type { CellBase, Matrix } from 'react-spreadsheet';
 
 
-const NUM_PAGES = 2;
+// Remove NUM_PAGES, use dynamic length
 const columns = [
   'ご葬家名または故人名',
   'ご葬儀の日程',
@@ -111,21 +111,74 @@ const OrderIntake = () => {
   // Unicode for circled numbers: ① (U+2460), ② (U+2461), ...
   const circledNumbers = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 
+  const handleAddSheet = () => {
+    setPagesData(prev => [...prev, [columns.map(() => ({ value: '' }))]]);
+    setActivePage(pagesData.length); // focus new sheet
+  };
+
   return (
     <>
       <div style={{ position: 'sticky', top: 0, background: '#fff', zIndex: 10, padding: '1rem 0 1rem 0', borderBottom: '1px solid #eee' }}>
         <h1 style={{ margin: 0, color: "black", fontSize: '1.3rem' }}>注文一覧</h1>
-        <div className="tabs" style={{ marginTop: '1rem' }}>
-          {Array(NUM_PAGES).fill(null).map((_, idx) => (
-            <button
-              key={idx}
-              className={"tab" + (activePage === idx ? " active" : "")}
-              style={{ marginRight: 8, fontSize: '1.1rem' }}
-              onClick={() => setActivePage(idx)}
-            >
-              シート {circledNumbers[idx] || idx + 1}
-            </button>
+        <div className="tabs" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
+          {pagesData.map((_, idx) => (
+            <div key={idx} style={{ position: 'relative', display: 'inline-block', marginRight: 8 }}>
+              <button
+                className={"tab" + (activePage === idx ? " active" : "")}
+                style={{ fontSize: '1.1rem', paddingRight: pagesData.length > 1 ? 28 : undefined }}
+                onClick={() => setActivePage(idx)}
+              >
+                シート {circledNumbers[idx] || idx + 1}
+              </button>
+              {pagesData.length > 1 && (
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    if (window.confirm('このシートを削除してもよろしいですか？')) {
+                      setPagesData(prev => {
+                        const newData = prev.filter((_, i) => i !== idx);
+                        // If the removed tab was before or at the current, adjust activePage
+                        if (activePage > idx) setActivePage(a => a - 1);
+                        else if (activePage === idx) setActivePage(a => Math.max(0, a - 1));
+                        return newData;
+                      });
+                    }
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: -10,
+                    top: -14,
+                    width: 20,
+                    height: 20,
+                    border: 'none',
+                    background: '#fff',
+                    color: '#e53e3e',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    padding: 0,
+                    lineHeight: 1,
+                    zIndex: 2,
+                    borderRadius: '50%',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  aria-label={`Remove sheet ${idx + 1}`}
+                  tabIndex={-1}
+                >×</button>
+              )}
+            </div>
           ))}
+          <button
+            className="tab"
+            style={{ fontSize: '1.1rem', padding: '0.5rem 1rem', border: '1px solid #ccc', background: '#f1f1f1', cursor: 'pointer' }}
+            onClick={handleAddSheet}
+            aria-label="Add new sheet"
+          >
+            ＋
+          </button>
         </div>
         <div style={{ borderTop: '1px solid #e5e7eb', marginTop: 8, paddingTop: 8, display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <button className="primary" onClick={handleAddRow}>
