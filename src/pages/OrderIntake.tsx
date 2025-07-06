@@ -1,5 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import Spreadsheet from 'react-spreadsheet';
 
 
@@ -99,6 +101,21 @@ const OrderIntake = () => {
   const [sheetNames, setSheetNames] = useState(initialDataList.map((_, idx) => defaultSheetName(idx)));
   const [editingSheetIdx, setEditingSheetIdx] = useState(-1);
   const [editingSheetValue, setEditingSheetValue] = useState('');
+  const tableRef = useRef<HTMLDivElement>(null);
+  // PDFエクスポート
+  const handleExportPDF = async () => {
+    if (!tableRef.current) return;
+    const input = tableRef.current;
+    const canvas = await html2canvas(input, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth - 40;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
+    pdf.save(`${sheetNames[activePage] || '注文一覧'}.pdf`);
+  };
 
   const handleAddRow = () => {
     setPagesData(prev => prev.map((data, idx) =>
@@ -289,9 +306,12 @@ const OrderIntake = () => {
           <button className="primary" onClick={handleRemoveRow} disabled={pagesData[activePage].length === 0}>
             最後の行を削除
           </button>
+          <button className="secondary" onClick={handleExportPDF} style={{ marginLeft: 8 }}>
+            PDF出力
+          </button>
         </div>
       </div>
-      <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+      <div style={{ overflowX: 'auto', maxWidth: '100%' }} ref={tableRef}>
         <style>{`
           .Spreadsheet__table th {
             background: #f7fafc !important;

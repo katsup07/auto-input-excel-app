@@ -64,7 +64,7 @@ body {
 .main {
   background: #fff;
   border-radius: 12px;
-  margin: 2rem 2rem 2rem 0;
+  margin: 2rem 1rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   padding: 2rem 2.5rem;
   min-height: 80vh;
@@ -110,6 +110,8 @@ button.primary:disabled {
   color: #fff;
   cursor: not-allowed;
 }
+
+b
 
 /* Form styles */
 .form {
@@ -199,6 +201,18 @@ button.primary:hover {
   background-color: #2c5282;
 }
 
+/* Buttons */
+button.secondary {
+  background-color: #2bb07b;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+button.secondary:hover {
+    background-color: #227e59;
+}
+
 /* Tabs */
 .tabs {
   display: flex;
@@ -279,6 +293,13 @@ h1 {
 .sidebar a.active {
   font-weight: bold;
 }
+.menu{
+  font-size: 1.4rem !important;
+  color: rgb(67, 154, 230) !important;
+  border-bottom: 1px solid  rgb(67, 154, 230);
+  text-align: left;
+}
+
 .main {
   flex: 1;
   padding: 1rem;

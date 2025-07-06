@@ -7,7 +7,7 @@ import './index.css'
 function App() {
   return (
     <Router>
-      <div className="app">
+      <div className="app" >
         <Sidebar />
         <div className="main">
           <Routes>
