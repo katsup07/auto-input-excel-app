@@ -5,9 +5,7 @@ const Sidebar = () => (
   <nav className="sidebar">
     <h2>Menu</h2>
     <NavLink to="/" end>注文一覧</NavLink>
-    <NavLink to="/excel-sync">Excel Sync</NavLink>
-    <NavLink to="/categorization">By Funeral</NavLink>
-    <NavLink to="/generate-excel">Generate Excel</NavLink>
+    <NavLink to="/categorization">注文の分類・集計</NavLink>
   </nav>
 );
 

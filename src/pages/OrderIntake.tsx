@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import Spreadsheet from 'react-spreadsheet';
-import type { CellBase, Matrix } from 'react-spreadsheet';
 
 
 // Remove NUM_PAGES, use dynamic length
@@ -294,10 +293,18 @@ const OrderIntake = () => {
       </div>
       <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
         <style>{`
-          .Spreadsheet__table th,
+          .Spreadsheet__table th {
+            background: #f7fafc !important;
+            border: 1px solid #e5e7eb !important;
+            padding: 0.5rem !important;
+            color: inherit;
+            font-weight: normal;
+          }
           .Spreadsheet__table td {
             white-space: pre-wrap !important;
             word-break: break-all;
+            border: 1px solid #e5e7eb !important;
+            padding: 0.5rem !important;
           }
         `}</style>
         <Spreadsheet
