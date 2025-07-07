@@ -1,3 +1,5 @@
+Note: This was mostly vibe coded as a demo to get screens, so please be careful if you plan to use this code in production. There are many areas that need to be fixed.
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
