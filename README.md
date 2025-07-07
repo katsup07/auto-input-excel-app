@@ -1,5 +1,3 @@
-# React + TypeScript + Vite
-
 # Install dependencies and start the development server
 ```npm install```<br/>
 ```npm run dev```
