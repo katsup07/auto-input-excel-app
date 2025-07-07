@@ -78,11 +78,24 @@ table {
   border: 1px solid #e5e7eb;
   margin-bottom: 1.5rem;
 }
-th, td {
+td {
   border: 1px solid #e5e7eb;
   padding: 0.7rem 0.8rem;
   text-align: left;
   font-size: 1rem;
+  white-space: pre-wrap !important;
+  word-break: break-all;
+}
+th {
+  border: 1px solid #e5e7eb;
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  font-size: 1rem;
+  background: #f3f6fa;
+  font-weight: 600;
+  white-space: normal !important;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 th {
   background: #f3f6fa;

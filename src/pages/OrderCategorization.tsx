@@ -11,7 +11,7 @@ const rawOrders = [
     family: '佐藤', date: '2025-07-10', customer: '山田 太郎', phone: '090-1234-5678', address: '〒100-0001 東京都千代田区千代田1-1', amount: '¥150,000', board: '山田', email: 'taro@example.com', payment: '振り込み', note: 'なし',
   },
   {
-    family: '大橋', date: '2025-07-14', customer: '山田 太郎', phone: '090-1234-5678', address: '〒100-0001 東京都千代田区千代田1-1', amount: '¥150,000', board: '山田', email: 'kenji@example.com', payment: '振り込み', note: 'なし',
+    family: '大橋', date: '2025-07-11', customer: '山田 太郎', phone: '090-1234-5678', address: '〒100-0001 東京都千代田区千代田1-1', amount: '¥150,000', board: '山田', email: 'kenji@example.com', payment: '振り込み', note: 'なし',
   },
   {
     family: '鈴木', date: '2025-07-12', customer: '鈴木 花子', phone: '080-9876-5432', address: '〒150-0002 東京都渋谷区渋谷2-2-2', amount: '¥200,000', board: '鈴木', email: '', payment: '現地払い', note: '白い花希望',
@@ -61,7 +61,7 @@ export default function OrderCategorization() {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: '1rem 0 0 0', color: 'black', fontSize: '1.3rem' }}>注文の分類・集計</h1>
+        <h1 style={{ margin: 0, color: 'black', fontSize: '1.3rem' }}>注文の分類・集計</h1>
         <button
           className="secondary"
           onClick={handleExportPDF}
@@ -70,29 +70,27 @@ export default function OrderCategorization() {
             display: 'flex',
             alignItems: 'center',
             gap: 4,
-            fontSize: '0.95em', // Match OrderIntake button size
-            padding: '0.35em 0.8em', // Match OrderIntake button size
-            height: 32, // Match OrderIntake button height
+            fontSize: '0.95em',
+            padding: '0.35em 0.8em',
+            height: 32,
             borderRadius: 6
           }}
           title="PDF出力"
         >
-          <FaDownload style={{ fontSize: '1.1em' }} /> PDF出力
+          <FaDownload style={{ fontSize: '1em' }} /> PDF出力
         </button>
       </div>
-      <div className="tabs" style={{ marginBottom: 16, marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
-          {funeralTabs.map((key, idx) => (
-            <button
-              key={key}
-              className={"tab" + (active === idx ? " active" : "")}
-              onClick={() => setActive(idx)}
-              style={{ minWidth: 120 }}
-            >
-              {key}
-            </button>
-          ))}
-        </div>
+      <div className="tabs" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
+        {funeralTabs.map((key, idx) => (
+          <button
+            key={key}
+            className={"tab" + (active === idx ? " active" : "")}
+            onClick={() => setActive(idx)}
+            style={{ minWidth: 120, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 4 }}
+          >
+            {key}
+          </button>
+        ))}
       </div>
       <div className="tab-content" ref={tableRef}>
         <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff' }}>
