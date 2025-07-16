@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FaDownload } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 
 export default function CsvToExcel() {
@@ -6,6 +7,9 @@ export default function CsvToExcel() {
   const [data, setData] = useState<string[][]>([]);
   // Excel template workbook state
   const [templateWb, setTemplateWb] = useState<XLSX.WorkBook | null>(null);
+  // parsed template content for preview
+  const [templateHeaders, setTemplateHeaders] = useState<string[]>([]);
+  const [templateDataRows, setTemplateDataRows] = useState<string[][]>([]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,10 +39,20 @@ export default function CsvToExcel() {
       const bstr = evt.target?.result;
       if (!bstr) return;
       const wb = XLSX.read(bstr as string | ArrayBuffer, { type: 'binary' });
+      // parse template for display
+      const firstSheet = wb.SheetNames[0];
+      const tplRows = XLSX.utils.sheet_to_json<string[]>(wb.Sheets[firstSheet], { header: 1 });
+      if (tplRows.length) {
+        setTemplateHeaders(tplRows[0] as string[]);
+        setTemplateDataRows(tplRows.slice(1) as string[][]);
+      }
       setTemplateWb(wb);
     };
     reader.readAsBinaryString(file);
   };
+
+  // combine template and CSV headers for preview
+  const displayHeaders = templateHeaders.length > 0 ? templateHeaders : headers;
 
   const handleExport = () => {
     if (templateWb) {
@@ -62,51 +76,75 @@ export default function CsvToExcel() {
     <div style={{ padding: 16 }}>
       <h1 style={{ fontSize: '1.3rem', marginBottom: 16 }}>CSVをExcelに追加</h1>
       <div style={{ marginBottom: 16 }}>
-        <label>XLSXアップロード:</label>
-       <div><input type="file" accept=".xlsx" onChange={handleTemplateUpload} /></div> 
+        <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>XLSXアップロード:</label>
+        <input
+          type="file"
+          accept=".xlsx"
+          onChange={handleTemplateUpload}
+          style={{
+            backgroundColor: '#217346',
+            color: '#fff',
+            padding: '0.5em',
+            borderRadius: 4,
+            cursor: 'pointer',
+            border: 'none'
+          }}
+        />
       </div>
       <div style={{ marginBottom: 16 }}>
-        <label>CSVアップロード:</label>
-        <div><input type="file" accept=".csv" onChange={handleFileUpload} /></div>
+        <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>CSV アップロード:</label>
+        <input
+          type="file"
+          accept=".csv"
+          onChange={handleFileUpload}
+          style={{
+            backgroundColor: '#2b6cb0',
+            color: '#fff',
+            padding: '0.5em',
+            borderRadius: 4,
+            cursor: 'pointer',
+            border: 'none'
+          }}
+        />
       </div>
 
-      {data.length > 0 && (
+      {(templateHeaders.length > 0 || data.length > 0) && (
         <>
-          <button
-            onClick={handleExport}
-            style={{
-              marginTop: 16,
-              padding: '0.5em 1em',
-              backgroundColor: '#007bff',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer'
-            }}
-          >
-            出力 (XLSX)
+          <button onClick={handleExport}  className="secondary" style={{
+            marginLeft: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: '0.95em',
+            padding: '0.35em 0.8em',
+            height: 32,
+            borderRadius: 6
+          }}>
+            <FaDownload style={{ fontSize: '1em' }} />エクセルに出力
           </button>
           <div style={{ overflowX: 'auto', marginTop: 16 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {headers.map((h, idx) => (
-                    <th
-                      key={idx}
-                      style={{ border: '1px solid #ccc', padding: '8px', background: '#f0f0f0' }}
-                    >
+                  {displayHeaders.map((h, idx) => (
+                    <th key={idx} style={{ border: '1px solid #ccc', padding: '8px', background: '#f3f6fa' }}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {data.map((row, rIdx) => (
-                  <tr key={rIdx}>
-                    {row.map((cell, cIdx) => (
-                      <td key={cIdx} style={{ border: '1px solid #ccc', padding: '8px' }}>
-                        {cell}
-                      </td>
+                {templateDataRows.map((row, i) => (
+                  <tr key={`tpl-${i}`} style={{ backgroundColor: '#e6f4ea' }}>
+                    {row.map((cell, j) => (
+                      <td key={j} style={{ border: '1px solid #ccc', padding: '8px' }}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+                {data.map((row, i) => (
+                  <tr key={`csv-${i}`} style={{ backgroundColor: '#e7f1fa' }}>
+                    {row.map((cell, j) => (
+                      <td key={j} style={{ border: '1px solid #ccc', padding: '8px' }}>{cell}</td>
                     ))}
                   </tr>
                 ))}
