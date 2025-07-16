@@ -80,6 +80,13 @@ export default function OrderCategorization() {
           <FaDownload style={{ fontSize: '1em' }} /> PDF出力
         </button>
       </div>
+      {/* --- Vimeo埋め込みサンプル --- */}
+      <div style={{ margin: '24px 0', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '1.1rem', color: '#555' }}>Vimeo動画サンプル</h2>
+        <div style={{ display: 'inline-block', border: '1px solid #ccc', borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+          <iframe src="https://player.vimeo.com/video/76979871" width="480" height="270" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title="Vimeo Sample"></iframe>
+        </div>
+      </div>
       <div className="tabs" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center' }}>
         {funeralTabs.map((key, idx) => (
           <button
