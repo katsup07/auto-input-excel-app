@@ -68,8 +68,43 @@ export default function CsvToExcel() {
     reader.readAsBinaryString(file);
   };
 
-  // combine template and CSV headers for preview
-  const displayHeaders = templateHeaders.length > 0 ? templateHeaders : headers;
+  // Get only non-empty headers for display
+  const getNonEmptyHeaders = () => {
+    if (templateHeaders.length === 0) return headers;
+    return templateHeaders.filter(header => header && header.trim() !== '');
+  };
+
+  const nonEmptyHeaders = getNonEmptyHeaders();
+
+  // Map CSV data to match Excel column structure for display (only non-empty columns)
+  const getMappedDisplayData = () => {
+    if (templateHeaders.length === 0) return data; // No template, show CSV as-is
+    
+    return data.map(csvRow => {
+      const mappedRow: string[] = [];
+      
+      // For each non-empty header, find the corresponding data
+      nonEmptyHeaders.forEach((header, displayIndex) => {
+        const originalIndex = templateHeaders.indexOf(header);
+        
+        // Find which CSV field maps to this Excel column
+        const csvHeaderIndex = headers.findIndex(csvHeader => {
+          const excelColumnIndex = csvToExcelMapping[csvHeader];
+          return excelColumnIndex === originalIndex;
+        });
+        
+        if (csvHeaderIndex !== -1 && csvHeaderIndex < csvRow.length) {
+          mappedRow[displayIndex] = csvRow[csvHeaderIndex] || '';
+        } else {
+          mappedRow[displayIndex] = '';
+        }
+      });
+      
+      return mappedRow;
+    });
+  };
+
+  const mappedDisplayData = getMappedDisplayData();
 
   const handleExport = () => {
     if (templateWb) {
@@ -159,7 +194,7 @@ export default function CsvToExcel() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {displayHeaders.map((h, idx) => (
+                  {nonEmptyHeaders.map((h, idx) => (
                     <th key={idx} style={{ border: '1px solid #ccc', padding: '8px', background: '#f3f6fa' }}>
                       {h}
                     </th>
@@ -169,12 +204,17 @@ export default function CsvToExcel() {
               <tbody>
                 {templateDataRows.map((row, i) => (
                   <tr key={`tpl-${i}`} style={{ backgroundColor: '#e6f4ea' }}>
-                    {row.map((cell, j) => (
-                      <td key={j} style={{ border: '1px solid #ccc', padding: '8px' }}>{cell}</td>
-                    ))}
+                    {nonEmptyHeaders.map((header, j) => {
+                      const originalIndex = templateHeaders.indexOf(header);
+                      return (
+                        <td key={j} style={{ border: '1px solid #ccc', padding: '8px' }}>
+                          {row[originalIndex] || ''}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
-                {data.map((row, i) => (
+                {mappedDisplayData.map((row, i) => (
                   <tr key={`csv-${i}`} style={{ backgroundColor: '#e7f1fa' }}>
                     {row.map((cell, j) => (
                       <td key={j} style={{ border: '1px solid #ccc', padding: '8px' }}>{cell}</td>
