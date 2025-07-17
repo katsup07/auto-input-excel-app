@@ -57,13 +57,15 @@ export default function CsvToExcel() {
       
       // parse template for display - headers from row 4, data from row 5 onwards
       const firstSheet = wb.SheetNames[0];
-      const tplRows = XLSX.utils.sheet_to_json<string[]>(wb.Sheets[firstSheet], { header: 1 });
-      if (tplRows.length > 3) {
+      // header: 1 option gives an array of arrays, not json objects.
+      const tplRows = XLSX.utils.sheet_to_json<string[]>(wb.Sheets[firstSheet], { header: 1 }); 
+      
+        const filteredRows = tplRows.filter(row => row.some(cell => cell && cell.trim() !== ''));
         // Headers from row 4 (0-indexed row 3), limited to columns 1-54
-        setTemplateHeaders((tplRows[3] || []).slice(0, 54));
+        setTemplateHeaders((filteredRows[3] || []).slice(0, 54));
         // Data from row 5 onwards (0-indexed row 4+)
-        setTemplateDataRows(tplRows.slice(4).map(row => row.slice(0, 54)));
-      }
+        setTemplateDataRows(filteredRows.slice(4).map(row => row.slice(0, 54)));
+      
       setTemplateWb(wb);
     };
     reader.readAsBinaryString(file);
