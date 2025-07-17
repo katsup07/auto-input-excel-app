@@ -11,6 +11,20 @@ export default function CsvToExcel() {
   const [templateHeaders, setTemplateHeaders] = useState<string[]>([]);
   const [templateDataRows, setTemplateDataRows] = useState<string[][]>([]);
 
+  // Mapping CSV headers to Excel column positions (0-indexed)
+  const csvToExcelMapping: { [key: string]: number } = {
+    "Date": 3, // 受注月日 (column 4)
+    "ご葬家名または故人名": 4, // 芳名板記載内容 (columns 5-17, using first column)
+    "芳名板のお名前": 4, // 芳名板記載内容 (columns 5-17, using first column)  
+    "ご依頼者のお名前": 17, // 依頼者名（敬称略） (columns 18-25, using first column)
+    "ご依頼者の住所": 28, // 住所 (columns 29-39, using first column)
+    "ご依頼者の連絡先": 39, // 電話番号 (columns 40-42, using first column)
+    "Phone Number": 39, // 電話番号 (columns 40-42, using first column)
+    "金額": 42, // 領収額（税込み） (columns 43-45, using first column)
+    "お支払い方法": 52, // お支払い (column 53)
+    "備考欄": 53, // 参考 (column 54)
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -39,12 +53,15 @@ export default function CsvToExcel() {
       const bstr = evt.target?.result;
       if (!bstr) return;
       const wb = XLSX.read(bstr as string | ArrayBuffer, { type: 'binary' });
-      // parse template for display
+      
+      // parse template for display - headers from row 4, data from row 5 onwards
       const firstSheet = wb.SheetNames[0];
       const tplRows = XLSX.utils.sheet_to_json<string[]>(wb.Sheets[firstSheet], { header: 1 });
-      if (tplRows.length) {
-        setTemplateHeaders(tplRows[0] as string[]);
-        setTemplateDataRows(tplRows.slice(1) as string[][]);
+      if (tplRows.length > 3) {
+        // Headers from row 4 (0-indexed row 3), limited to columns 1-54
+        setTemplateHeaders((tplRows[3] || []).slice(0, 54));
+        // Data from row 5 onwards (0-indexed row 4+)
+        setTemplateDataRows(tplRows.slice(4).map(row => row.slice(0, 54)));
       }
       setTemplateWb(wb);
     };
@@ -56,10 +73,26 @@ export default function CsvToExcel() {
 
   const handleExport = () => {
     if (templateWb) {
-      // append CSV data rows (skip header) into each sheet of the template
       templateWb.SheetNames.forEach((sheetName) => {
         const ws = templateWb.Sheets[sheetName];
-        XLSX.utils.sheet_add_aoa(ws, data, { origin: -1 });
+        
+        // Create mapped rows based on CSV to Excel column mapping
+        const mappedRows = data.map(csvRow => {
+          const mappedRow = new Array(54).fill(''); // Initialize with empty strings
+          
+          // For each CSV header, find the corresponding Excel column position
+          headers.forEach((csvHeader, csvIndex) => {
+            const excelColumnIndex = csvToExcelMapping[csvHeader];
+            if (excelColumnIndex !== undefined && csvIndex < csvRow.length) {
+              mappedRow[excelColumnIndex] = csvRow[csvIndex] || '';
+            }
+          });
+          
+          return mappedRow;
+        });
+        
+        // Append mapped rows starting from row 5 (0-indexed row 4)
+        XLSX.utils.sheet_add_aoa(ws, mappedRows, { origin: { r: 4, c: 0 } });
       });
       XLSX.writeFile(templateWb, 'export.xlsx');
     } else {
