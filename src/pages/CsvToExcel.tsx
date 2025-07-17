@@ -25,7 +25,8 @@ export default function CsvToExcel() {
     "備考欄": 53, // 参考 (column 54)
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // CSV
+  const handleCSVFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -44,8 +45,8 @@ export default function CsvToExcel() {
     reader.readAsBinaryString(file);
   };
 
-  // handle XLSX template upload
-  const handleTemplateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // XLSX
+  const handleExcelTemplateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -68,7 +69,7 @@ export default function CsvToExcel() {
     reader.readAsBinaryString(file);
   };
 
-  // Get only non-empty headers for display
+  // Get only non-empty headers for display and removes empty columns
   const getNonEmptyHeaders = () => {
     if (templateHeaders.length === 0) return headers;
     return templateHeaders.filter(header => header && header.trim() !== '');
@@ -148,7 +149,7 @@ export default function CsvToExcel() {
         <input
           type="file"
           accept=".xlsx"
-          onChange={handleTemplateUpload}
+          onChange={handleExcelTemplateUpload}
           style={{
             backgroundColor: '#217346',
             color: '#fff',
@@ -164,7 +165,7 @@ export default function CsvToExcel() {
         <input
           type="file"
           accept=".csv"
-          onChange={handleFileUpload}
+          onChange={handleCSVFileUpload}
           style={{
             backgroundColor: '#2b6cb0',
             color: '#fff',
