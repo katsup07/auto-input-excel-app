@@ -2,18 +2,13 @@ import React, { useState } from 'react';
 import { FaDownload } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 
-export default function CsvToExcel() {
-  const [headers, setHeaders] = useState<string[]>([]);
-  const [data, setData] = useState<string[][]>([]);
-  // Excel template workbook state
-  const [templateWb, setTemplateWb] = useState<XLSX.WorkBook | null>(null);
-  // parsed template content for preview
-  const [templateHeaders, setTemplateHeaders] = useState<string[]>([]);
-  const [templateDataRows, setTemplateDataRows] = useState<string[][]>([]);
+// Helpers
+const isNumber = (x: unknown) => !isNaN(Number(x));
 
-  // Mapping CSV headers to Excel column positions (0-indexed)
+// Mapping CSV headers to Excel column positions (0-indexed)
   const csvToExcelMapping: { [key: string]: number } = {
-    "Date": 3, // 受注月日 (column 4)
+    "No.": 0, // No column (index 0)
+    "Date": 2, // 受注\n月日 (column 3, index 2)
     "ご葬家名または故人名": 4, // 芳名板記載内容 (columns 5-17, using first column)
     "芳名板のお名前": 4, // 芳名板記載内容 (columns 5-17, using first column)  
     "ご依頼者のお名前": 17, // 依頼者名（敬称略） (columns 18-25, using first column)
@@ -23,6 +18,25 @@ export default function CsvToExcel() {
     "金額": 42, // 領収額（税込み） (columns 43-45, using first column)
     "お支払い方法": 52, // お支払い (column 53)
     "備考欄": 53, // 参考 (column 54)
+  };
+
+
+
+export default function CsvToExcel() {
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [data, setData] = useState<string[][]>([]);
+  // Excel template workbook state
+  const [templateWorkbook, setTemplateWorkbook] = useState<XLSX.WorkBook | null>(null);
+  // parsed template content for preview
+  const [templateHeaders, setTemplateHeaders] = useState<string[]>([]);
+  const [templateDataRows, setTemplateDataRows] = useState<string[][]>([]);
+
+  // Utility function to convert Excel serial number to date
+  const excelSerialToDate = (serial: number): string => {
+    const epoch = new Date(1899, 11, 30); // Excel epoch date
+    const days = Math.floor(serial);
+    epoch.setDate(epoch.getDate() + days);
+    return epoch.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   };
 
   // CSV
@@ -37,13 +51,15 @@ export default function CsvToExcel() {
       const wsName = wb.SheetNames[0];
       const ws = wb.Sheets[wsName];
       const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
+      
       if (rows.length) {
-        setHeaders(rows[0] as string[]);
+        setCsvHeaders(rows[0].map(header => header.trim()));
         setData(rows.slice(1) as string[][]);
       }
     };
     reader.readAsBinaryString(file);
   };
+
 
   // XLSX
   const handleExcelTemplateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +69,7 @@ export default function CsvToExcel() {
     reader.onload = (evt) => {
       const bstr = evt.target?.result;
       if (!bstr) return;
-      const wb = XLSX.read(bstr as string | ArrayBuffer, { type: 'binary' });
+      const wb = XLSX.read(bstr as string | ArrayBuffer, { type: 'binary', bookVBA: true });
       
       // parse template for display - headers from row 4, data from row 5 onwards
       const firstSheet = wb.SheetNames[0];
@@ -66,14 +82,15 @@ export default function CsvToExcel() {
         // Data from row 5 onwards (0-indexed row 4+)
         setTemplateDataRows(filteredRows.slice(4).map(row => row.slice(0, 54)));
       
-      setTemplateWb(wb);
+      setTemplateWorkbook(wb);
     };
     reader.readAsBinaryString(file);
   };
 
+
   // Get only non-empty headers for display and removes empty columns
   const getNonEmptyHeaders = () => {
-    if (templateHeaders.length === 0) return headers;
+    if (templateHeaders.length === 0) return csvHeaders;
     return templateHeaders.filter(header => header && header.trim() !== '');
   };
 
@@ -82,47 +99,72 @@ export default function CsvToExcel() {
   // Map CSV data to match Excel column structure for display (only non-empty columns)
   const getMappedDisplayData = () => {
     if (templateHeaders.length === 0) return data; // No template, show CSV as-is
-    
+
     return data.map(csvRow => {
       const mappedRow: string[] = [];
-      
+
       // For each non-empty header, find the corresponding data
       nonEmptyHeaders.forEach((header, displayIndex) => {
         const originalIndex = templateHeaders.indexOf(header);
-        
+
         // Find which CSV field maps to this Excel column
-        const csvHeaderIndex = headers.findIndex(csvHeader => {
-          const excelColumnIndex = csvToExcelMapping[csvHeader];
+        const csvHeaderIndex = csvHeaders.findIndex(csvHeader => {
+          const trimmedHeader = csvHeader.trim();
+          const excelColumnIndex = csvToExcelMapping[trimmedHeader];
+          
           return excelColumnIndex === originalIndex;
         });
-        
+
         if (csvHeaderIndex !== -1 && csvHeaderIndex < csvRow.length) {
-          mappedRow[displayIndex] = csvRow[csvHeaderIndex] || '';
+          let cellValue = csvRow[csvHeaderIndex] || '';
+
+          // Convert Excel serial number to date if the header is "Date"
+          if (csvHeaders[csvHeaderIndex].trim() === "Date" && isNumber(cellValue))
+            cellValue = excelSerialToDate(Number(cellValue));
+
+          mappedRow[displayIndex] = cellValue;
         } else {
           mappedRow[displayIndex] = '';
         }
       });
-      
+
       return mappedRow;
     });
   };
 
+
   const mappedDisplayData = getMappedDisplayData();
 
   const handleExport = () => {
-    if (templateWb) {
-      templateWb.SheetNames.forEach((sheetName) => {
-        const ws = templateWb.Sheets[sheetName];
+    if (!templateWorkbook) {
+      // fallback: create new workbook with CSV content
+      const wb = XLSX.utils.book_new();
+      const wsData = [csvHeaders, ...data];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+      XLSX.writeFile(wb, 'export.xlsx');
+      return;
+}
+      
+templateWorkbook.SheetNames.forEach((sheetName) => {
+        const ws = 
+        templateWorkbook.Sheets[sheetName];
         
         // Create mapped rows based on CSV to Excel column mapping
         const mappedRows = data.map(csvRow => {
           const mappedRow = new Array(54).fill(''); // Initialize with empty strings
           
           // For each CSV header, find the corresponding Excel column position
-          headers.forEach((csvHeader, csvIndex) => {
+          csvHeaders.forEach((csvHeader, csvIndex) => {
             const excelColumnIndex = csvToExcelMapping[csvHeader];
             if (excelColumnIndex !== undefined && csvIndex < csvRow.length) {
-              mappedRow[excelColumnIndex] = csvRow[csvIndex] || '';
+              let cellValue = csvRow[csvIndex] || '';
+              
+              // Convert Excel serial number to date if the header is "Date"
+              if (csvHeader.trim() === "Date" && isNumber(cellValue))
+                cellValue = excelSerialToDate(Number(cellValue));
+              
+              mappedRow[excelColumnIndex] = cellValue;
             }
           });
           
@@ -132,17 +174,11 @@ export default function CsvToExcel() {
         // Append mapped rows starting from row 5 (0-indexed row 4)
         XLSX.utils.sheet_add_aoa(ws, mappedRows, { origin: { r: 4, c: 0 } });
       });
-      XLSX.writeFile(templateWb, 'export.xlsx');
-    } else {
-      // fallback: create new workbook with CSV content
-      const wb = XLSX.utils.book_new();
-      const wsData = [headers, ...data];
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-      XLSX.writeFile(wb, 'export.xlsx');
+      XLSX.writeFile(
+        templateWorkbook, 'export.xlsx');
     }
-  };
 
+    
   return (
     <div style={{ padding: 16 }}>
       <h1 style={{ fontSize: '1.3rem', marginBottom: 16 }}>CSVをExcelに追加</h1>
