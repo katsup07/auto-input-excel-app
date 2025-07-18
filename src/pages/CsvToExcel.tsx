@@ -20,24 +20,23 @@ const isNumber = (x: unknown) => !isNaN(Number(x));
     "備考欄": 53, // 参考 (column 54)
   };
 
-
-
-export default function CsvToExcel() {
-  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-  const [csvRows, setCsvRows] = useState<string[][]>([]);
-  // Excel template workbook state
-  const [excelTemplateWorkbook, setExcelTemplateWorkbook] = useState<XLSX.WorkBook | null>(null);
-  // parsed template content for preview
-  const [excelTemplateHeaders, setExcelTemplateHeaders] = useState<string[]>([]);
-  const [excelTemplateRows, setExcelTemplateRows] = useState<string[][]>([]);
-
-  // Utility function to convert Excel serial number to date
+    // Utility function to convert Excel serial number to date
   const excelSerialToDate = (serial: number): string => {
     const epoch = new Date(1899, 11, 30); // Excel epoch date
     const days = Math.floor(serial);
     epoch.setDate(epoch.getDate() + days);
     return epoch.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   };
+
+
+export default function CsvToExcel() {
+  // CSV
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [csvRows, setCsvRows] = useState<string[][]>([]);
+  // Excel
+  const [excelTemplateWorkbook, setExcelTemplateWorkbook] = useState<XLSX.WorkBook | null>(null);
+  const [excelTemplateHeaders, setExcelTemplateHeaders] = useState<string[]>([]);
+  const [excelTemplateRows, setExcelTemplateRows] = useState<string[][]>([]);
 
   // CSV
   const handleCSVFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,7 +75,7 @@ export default function CsvToExcel() {
       // header: 1 option gives an array of arrays, not json objects.
       const tplRows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[firstSheet], { header: 1 }); 
       
-        const filteredRows = tplRows.filter(row => row.some(cell => cell && cell.trim() !== ''));
+        const filteredRows = tplRows.filter(row => row.some(cell => typeof cell === "string" && cell?.trim() !== ''));
         // Headers from row 4 (0-indexed row 3), limited to columns 1-54
         setExcelTemplateHeaders((filteredRows[3] || []).slice(0, 54));
         // Data from row 5 onwards (0-indexed row 4+)
@@ -144,38 +143,42 @@ export default function CsvToExcel() {
       XLSX.utils.book_append_sheet(workbook, workSheet, 'Sheet1');
       XLSX.writeFile(workbook, 'export.xlsx');
       return;
-}
-      
-excelTemplateWorkbook.SheetNames.forEach((sheetName) => {
-        const workSheet = excelTemplateWorkbook.Sheets[sheetName];
-
-        // Create mapped rows based on CSV to Excel column mapping
-        const mappedRows = csvRows.map(csvRow => {
-          const mappedRow = new Array(54).fill(''); // Initialize with empty strings
-          
-          // For each CSV header, find the corresponding Excel column position
-          csvHeaders.forEach((csvHeader, csvIndex) => {
-            const excelColumnIndex = csvToExcelMapping[csvHeader];
-            if (excelColumnIndex !== undefined && csvIndex < csvRow.length) {
-              let cellValue = csvRow[csvIndex] || '';
-              
-              // Convert Excel serial number to date if the header is "Date"
-              if (csvHeader.trim() === "Date" && isNumber(cellValue))
-                cellValue = excelSerialToDate(Number(cellValue));
-              
-              mappedRow[excelColumnIndex] = cellValue;
-            }
-          });
-          
-          return mappedRow;
-        });
-        
-        // Append mapped rows starting from row 5 (0-indexed row 4)
-        XLSX.utils.sheet_add_aoa(workSheet, mappedRows, { origin: { r: 4, c: 0 } });
-      });
-      XLSX.writeFile(
-        excelTemplateWorkbook, 'export.xlsx');
     }
+
+    excelTemplateWorkbook.SheetNames.forEach((sheetName) => {
+      const workSheet = excelTemplateWorkbook.Sheets[sheetName];
+
+      // Determine the last row with data in the template
+      const range = XLSX.utils.decode_range(workSheet['!ref'] || '');
+      const lastRow = range.e.r;
+
+      // Create mapped rows based on CSV to Excel column mapping
+      const mappedRows = csvRows.map(csvRow => {
+        const mappedRow = new Array(54).fill(''); // Initialize with empty strings
+
+        // For each CSV header, find the corresponding Excel column position
+        csvHeaders.forEach((csvHeader, csvIndex) => {
+          const excelColumnIndex = csvToExcelMapping[csvHeader];
+          if (excelColumnIndex !== undefined && csvIndex < csvRow.length) {
+            let cellValue = csvRow[csvIndex] || '';
+
+            // Convert Excel serial number to date if the header is "Date"
+            if (csvHeader.trim() === "Date" && isNumber(cellValue))
+              cellValue = excelSerialToDate(Number(cellValue));
+
+            mappedRow[excelColumnIndex] = cellValue;
+          }
+        });
+
+        return mappedRow;
+      });
+
+      // Append mapped rows starting from the next row after the last row
+      XLSX.utils.sheet_add_aoa(workSheet, mappedRows, { origin: { r: lastRow + 1, c: 0 } });
+    });
+
+    XLSX.writeFile(excelTemplateWorkbook, 'export.xlsx');
+  };
 
     
   return (
