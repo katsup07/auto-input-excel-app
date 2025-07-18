@@ -24,12 +24,12 @@ const isNumber = (x: unknown) => !isNaN(Number(x));
 
 export default function CsvToExcel() {
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-  const [data, setData] = useState<string[][]>([]);
+  const [csvRows, setCsvRows] = useState<string[][]>([]);
   // Excel template workbook state
-  const [templateWorkbook, setTemplateWorkbook] = useState<XLSX.WorkBook | null>(null);
+  const [excelTemplateWorkbook, setExcelTemplateWorkbook] = useState<XLSX.WorkBook | null>(null);
   // parsed template content for preview
-  const [templateHeaders, setTemplateHeaders] = useState<string[]>([]);
-  const [templateDataRows, setTemplateDataRows] = useState<string[][]>([]);
+  const [excelTemplateHeaders, setExcelTemplateHeaders] = useState<string[]>([]);
+  const [excelTemplateRows, setExcelTemplateRows] = useState<string[][]>([]);
 
   // Utility function to convert Excel serial number to date
   const excelSerialToDate = (serial: number): string => {
@@ -47,14 +47,14 @@ export default function CsvToExcel() {
     reader.onload = (evt) => {
       const bstr = evt.target?.result;
       if (!bstr) return;
-      const wb = XLSX.read(bstr as string | ArrayBuffer, { type: 'binary' });
-      const wsName = wb.SheetNames[0];
-      const ws = wb.Sheets[wsName];
-      const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
+      const workBook = XLSX.read(bstr as string | ArrayBuffer, { type: 'binary' });
+      const wsName = workBook.SheetNames[0];
+      const workSheet = workBook.Sheets[wsName];
+      const rows = XLSX.utils.sheet_to_json<string[]>(workSheet, { header: 1 });
       
       if (rows.length) {
         setCsvHeaders(rows[0].map(header => header.trim()));
-        setData(rows.slice(1) as string[][]);
+        setCsvRows(rows.slice(1) as string[][]);
       }
     };
     reader.readAsBinaryString(file);
@@ -69,20 +69,20 @@ export default function CsvToExcel() {
     reader.onload = (evt) => {
       const bstr = evt.target?.result;
       if (!bstr) return;
-      const wb = XLSX.read(bstr as string | ArrayBuffer, { type: 'binary', bookVBA: true });
+      const workbook = XLSX.read(bstr as string | ArrayBuffer, { type: 'binary', bookVBA: true });
       
       // parse template for display - headers from row 4, data from row 5 onwards
-      const firstSheet = wb.SheetNames[0];
+      const firstSheet = workbook.SheetNames[0];
       // header: 1 option gives an array of arrays, not json objects.
-      const tplRows = XLSX.utils.sheet_to_json<string[]>(wb.Sheets[firstSheet], { header: 1 }); 
+      const tplRows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[firstSheet], { header: 1 }); 
       
         const filteredRows = tplRows.filter(row => row.some(cell => cell && cell.trim() !== ''));
         // Headers from row 4 (0-indexed row 3), limited to columns 1-54
-        setTemplateHeaders((filteredRows[3] || []).slice(0, 54));
+        setExcelTemplateHeaders((filteredRows[3] || []).slice(0, 54));
         // Data from row 5 onwards (0-indexed row 4+)
-        setTemplateDataRows(filteredRows.slice(4).map(row => row.slice(0, 54)));
+        setExcelTemplateRows(filteredRows.slice(4).map(row => row.slice(0, 54)));
       
-      setTemplateWorkbook(wb);
+      setExcelTemplateWorkbook(workbook);
     };
     reader.readAsBinaryString(file);
   };
@@ -90,22 +90,22 @@ export default function CsvToExcel() {
 
   // Get only non-empty headers for display and removes empty columns
   const getNonEmptyHeaders = () => {
-    if (templateHeaders.length === 0) return csvHeaders;
-    return templateHeaders.filter(header => header && header.trim() !== '');
+    if (excelTemplateHeaders.length === 0) return csvHeaders;
+    return excelTemplateHeaders.filter(header => header && header.trim() !== '');
   };
 
   const nonEmptyHeaders = getNonEmptyHeaders();
 
   // Map CSV data to match Excel column structure for display (only non-empty columns)
   const getMappedDisplayData = () => {
-    if (templateHeaders.length === 0) return data; // No template, show CSV as-is
+    if (excelTemplateHeaders.length === 0) return csvRows; // No template, show CSV as-is
 
-    return data.map(csvRow => {
+    return csvRows.map(csvRow => {
       const mappedRow: string[] = [];
 
       // For each non-empty header, find the corresponding data
       nonEmptyHeaders.forEach((header, displayIndex) => {
-        const originalIndex = templateHeaders.indexOf(header);
+        const originalIndex = excelTemplateHeaders.indexOf(header);
 
         // Find which CSV field maps to this Excel column
         const csvHeaderIndex = csvHeaders.findIndex(csvHeader => {
@@ -136,22 +136,21 @@ export default function CsvToExcel() {
   const mappedDisplayData = getMappedDisplayData();
 
   const handleExport = () => {
-    if (!templateWorkbook) {
+    if (!excelTemplateWorkbook) {
       // fallback: create new workbook with CSV content
-      const wb = XLSX.utils.book_new();
-      const wsData = [csvHeaders, ...data];
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-      XLSX.writeFile(wb, 'export.xlsx');
+      const workbook = XLSX.utils.book_new();
+      const wsData = [csvHeaders, ...csvRows];
+      const workSheet = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(workbook, workSheet, 'Sheet1');
+      XLSX.writeFile(workbook, 'export.xlsx');
       return;
 }
       
-templateWorkbook.SheetNames.forEach((sheetName) => {
-        const ws = 
-        templateWorkbook.Sheets[sheetName];
-        
+excelTemplateWorkbook.SheetNames.forEach((sheetName) => {
+        const workSheet = excelTemplateWorkbook.Sheets[sheetName];
+
         // Create mapped rows based on CSV to Excel column mapping
-        const mappedRows = data.map(csvRow => {
+        const mappedRows = csvRows.map(csvRow => {
           const mappedRow = new Array(54).fill(''); // Initialize with empty strings
           
           // For each CSV header, find the corresponding Excel column position
@@ -172,10 +171,10 @@ templateWorkbook.SheetNames.forEach((sheetName) => {
         });
         
         // Append mapped rows starting from row 5 (0-indexed row 4)
-        XLSX.utils.sheet_add_aoa(ws, mappedRows, { origin: { r: 4, c: 0 } });
+        XLSX.utils.sheet_add_aoa(workSheet, mappedRows, { origin: { r: 4, c: 0 } });
       });
       XLSX.writeFile(
-        templateWorkbook, 'export.xlsx');
+        excelTemplateWorkbook, 'export.xlsx');
     }
 
     
@@ -215,7 +214,7 @@ templateWorkbook.SheetNames.forEach((sheetName) => {
         />
       </div>
 
-      {(templateHeaders.length > 0 || data.length > 0) && (
+      {(excelTemplateHeaders.length > 0 || csvRows.length > 0) && (
         <>
           <button onClick={handleExport}  className="secondary" style={{
             marginLeft: 'auto',
@@ -241,10 +240,10 @@ templateWorkbook.SheetNames.forEach((sheetName) => {
                 </tr>
               </thead>
               <tbody>
-                {templateDataRows.map((row, i) => (
+                {excelTemplateRows.map((row, i) => (
                   <tr key={`tpl-${i}`} style={{ backgroundColor: '#e6f4ea' }}>
                     {nonEmptyHeaders.map((header, j) => {
-                      const originalIndex = templateHeaders.indexOf(header);
+                      const originalIndex = excelTemplateHeaders.indexOf(header);
                       return (
                         <td key={j} style={{ border: '1px solid #ccc', padding: '8px' }}>
                           {row[originalIndex] || ''}
